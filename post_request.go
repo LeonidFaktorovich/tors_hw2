@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -40,6 +41,7 @@ func Post(state *State, replication_trigger *ReplicationTrigger, w http.Response
 	replication_trigger.TriggerAll()
 
 	for uint64(log_index) >= state.pers_state.GetCommitLength() {
+		fmt.Printf("Log index is `%v`, current commit length: `%v`\n", log_index, state.pers_state.GetCommitLength())
 		state.commit_cv.Wait()
 	}
 	state.mutex.Unlock()

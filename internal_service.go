@@ -61,6 +61,7 @@ func (service *InternalService) ReceiveLog(c context.Context, request *internal_
 	}
 
 	service.state.mutex.RLock()
+	current_term = service.state.pers_state.GetTerm()
 	log_ok := (service.state.log.GetSize() >= request.LogLength) && (request.LogLength == 0 || request.PrevLogTerm == service.state.log.GetEntry(request.LogLength-1).term)
 	service.state.mutex.RUnlock()
 
@@ -82,6 +83,14 @@ func (service *InternalService) ReceiveLog(c context.Context, request *internal_
 
 		return &response, nil
 	}
+
+	service.state.mutex.RLock()
+	log_term := uint64(0)
+	if service.state.log.GetSize() >= request.LogLength && request.LogLength > 0 {
+		log_term = service.state.log.GetEntry(request.LogLength - 1).term
+	}
+	fmt.Printf("Not acked entries. Curren log length: %v, request log length %v. Request prev log term: %v, current prev log term: %v. Request term: %v, current term: %v\n", service.state.log.GetSize(), request.LogLength, request.PrevLogTerm, log_term, request.Term, service.state.pers_state.GetTerm())
+	service.state.mutex.RUnlock()
 
 	response := internal_service.LogResponse{}
 	response.Ack = 0

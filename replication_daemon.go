@@ -41,12 +41,13 @@ func CommitLogEntries(state *State) {
 
 	curr_commit_length := state.pers_state.GetCommitLength()
 	new_commit_length := uint32(0)
-	if uint64(len(acked)) > (state.nodes_count-1)/2 {
-		new_commit_length = acked[(state.nodes_count-1)/2]
+	if uint64(len(acked)) > (state.nodes_count-1-1)/2 {
+		new_commit_length = acked[(state.nodes_count-1-1)/2]
 	}
 
 	if new_commit_length > uint32(curr_commit_length) && state.log.GetEntry(new_commit_length-1).term == state.pers_state.GetTerm() {
 		state.pers_state.SetCommitLength(uint64(new_commit_length))
+		fmt.Printf("New commit length `%v`\n", new_commit_length)
 		state.commit_cv.Broadcast()
 	}
 }
