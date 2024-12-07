@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "internal_service/";
+
+service InternalService {
+    rpc ReceiveLog (LogRequest) returns (LogResponse) {}
+    rpc Vote (VoteRequest) returns (VoteResponse) {}
+}
+
+message Entry {
+    uint64 term = 1;
+    bytes msg = 2;
+}
+
+message LogRequest {
+    uint64 term = 1;
+    uint32 log_length = 2;
+    uint64 prev_log_term = 3;
+    uint64 leader_commit = 4;
+    repeated Entry entries = 5;
+}
+
+message LogResponse {
+    uint64 node_id = 1;
+    uint64 term = 2;
+    uint32 ack = 3;
+    bool appened = 4;
+}
+
+message VoteRequest {
+    uint64 term = 1;
+    uint32 log_length = 2;
+    uint64 log_term = 3;
+}
+
+message VoteResponse {
+    uint64 term = 1;
+    bool voted = 2;
+    uint64 node_id = 3;
+}
