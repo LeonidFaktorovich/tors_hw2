@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"io"
@@ -77,4 +78,19 @@ func Serialize(key []byte, value []byte) []byte {
 	copy(bytes[4:], key)
 	copy(bytes[4+len(key):], value)
 	return bytes
+}
+
+func FindLastValueIndex(commit_length uint64, log *Log, key []byte) (int64, error) {
+	for i := commit_length; i >= 1; i-- {
+		msg := log.GetEntry(uint32(i - 1)).msg
+		curr_key, err := ParseKey(msg)
+		if err != nil {
+			return -1, err
+		}
+		if !bytes.Equal(curr_key, key) {
+			continue
+		}
+		return int64(i - 1), nil
+	}
+	return -1, nil
 }

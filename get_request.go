@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 )
@@ -28,32 +27,23 @@ func Get(state *State, w http.ResponseWriter, r *http.Request) {
 	state.mutex.RLock()
 	defer state.mutex.RUnlock()
 
-	commit_length := state.pers_state.GetCommitLength()
-	not_found := true
-	for i := commit_length; i >= 1; i-- {
-		msg := state.log.GetEntry(uint32(i - 1)).msg
-		key, err := ParseKey(msg)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if !bytes.Equal(key, []byte(body.Key)) {
-			continue
-		}
-		value, err := ParseValue(msg, key)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		response.Value = string(value)
-		response.LogIndex = i - 1
-		not_found = false
-		break
+	index, err := FindLastValueIndex(state.pers_state.GetCommitLength(), state.log, []byte(body.Key))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	if not_found {
+	if index == -1 {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+
+	value, err := ParseValue(state.log.GetEntry(uint32(index)).msg, []byte(body.Key))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	response.Value = string(value)
+	response.LogIndex = uint64(index)
 
 	w.Header().Set("Content-Type", "application/json")
 	jsonResp, err := json.Marshal(response)

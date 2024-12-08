@@ -21,13 +21,18 @@ func (h *Handler) PostHandler(w http.ResponseWriter, r *http.Request) {
 	Post(h.state, h.replication_trigger, w, r)
 }
 
+func (h *Handler) PutHandler(w http.ResponseWriter, r *http.Request) {
+	Put(h.state, h.replication_trigger, w, r)
+}
+
 func HttpDaemon(state *State, replication_trigger *ReplicationTrigger, port int) {
 	r := mux.NewRouter()
 
 	h := Handler{state: state, replication_trigger: replication_trigger}
 
 	r.HandleFunc("/get", h.GetHandler).Methods("GET")
-	r.HandleFunc("/set", h.PostHandler).Methods("POST")
+	r.HandleFunc("/create", h.PostHandler).Methods("POST")
+	r.HandleFunc("/update", h.PutHandler).Methods("PUT")
 
 	addr := fmt.Sprintf(":%v", port)
 	fmt.Printf("Start http server on %s\n", addr)
