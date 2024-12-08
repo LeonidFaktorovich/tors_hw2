@@ -57,10 +57,6 @@ func GetNodeId(c context.Context) (uint64, error) {
 }
 
 func ParseKey(msg []byte) ([]byte, error) {
-	if len(msg) < 8 {
-		return []byte{}, io.ErrUnexpectedEOF
-	}
-
 	key_len := binary.LittleEndian.Uint32(msg[:4])
 	if len(msg) < int(key_len)+4 {
 		return []byte{}, io.ErrUnexpectedEOF
@@ -68,15 +64,29 @@ func ParseKey(msg []byte) ([]byte, error) {
 	return msg[4 : key_len+4], nil
 }
 
-func ParseValue(msg []byte, key []byte) ([]byte, error) {
-	return msg[len(key)+4:], nil
+func ParseValue(msg []byte, key []byte) ([]byte /* is_deleted */, bool, error) {
+	if msg[4+len(key)] != 0 {
+		return []byte{}, true, nil
+	}
+	return msg[len(key)+5:], false, nil
 }
 
 func Serialize(key []byte, value []byte) []byte {
-	bytes := make([]byte, 4+len(key)+len(value))
+	bytes := make([]byte, 4+len(key)+1+len(value))
 	binary.LittleEndian.PutUint32(bytes, uint32(len(key)))
 	copy(bytes[4:], key)
-	copy(bytes[4+len(key):], value)
+	is_deleted := []byte{0}
+	copy(bytes[4+len(key):5+len(key)], is_deleted)
+	copy(bytes[5+len(key):], value)
+	return bytes
+}
+
+func SerializeErase(key []byte) []byte {
+	bytes := make([]byte, 4+len(key)+1)
+	binary.LittleEndian.PutUint32(bytes, uint32(len(key)))
+	copy(bytes[4:], key)
+	is_deleted := []byte{1}
+	copy(bytes[4+len(key):], is_deleted)
 	return bytes
 }
 
