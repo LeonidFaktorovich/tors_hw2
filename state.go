@@ -46,9 +46,6 @@ func CreateState(pers_storage_path string, log_path string, node_id uint64, node
 	sent_length := make(map[uint64]uint32)
 	acked_length := make(map[uint64]uint32)
 	for i := uint64(1); i <= nodes_count; i++ {
-		if i == node_id {
-			continue
-		}
 		sent_length[i] = 0
 		acked_length[i] = 0
 	}

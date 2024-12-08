@@ -50,6 +50,7 @@ func Put(state *State, replication_trigger *ReplicationTrigger, w http.ResponseW
 	value_bytes := []byte(body.NewValue)
 
 	state.log.Append(Entry{term: state.pers_state.GetTerm(), msg: Serialize(key_bytes, value_bytes)})
+	state.acked_length[state.node_id] = state.log.GetSize()
 	log_index := state.log.GetSize() - 1
 
 	replication_trigger.TriggerAll()

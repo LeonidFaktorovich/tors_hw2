@@ -36,6 +36,7 @@ func Post(state *State, replication_trigger *ReplicationTrigger, w http.Response
 	key_bytes := []byte(body.Key)
 	value_bytes := []byte(body.Value)
 	state.log.Append(Entry{term: state.pers_state.GetTerm(), msg: Serialize(key_bytes, value_bytes)})
+	state.acked_length[state.node_id] = state.log.GetSize()
 	log_index := state.log.GetSize() - 1
 
 	replication_trigger.TriggerAll()
